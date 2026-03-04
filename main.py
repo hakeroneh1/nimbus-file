@@ -331,39 +331,52 @@ async def upload_file(
 ):
     """Загрузка нескольких файлов одновременно с параллелизацией"""
     import asyncio
-    
+
+    print(f"📤 User '{user}' uploading {len(files)} files to path '{path}'")
+
     async def upload_single_file(file: UploadFile):
         data = await file.read()
-        return await save_file_chunks(data, file.filename, user, path)
-    
+        result = await save_file_chunks(data, file.filename, user, path)
+        print(f"   ✅ Uploaded '{file.filename}' for user '{user}'")
+        return result
+
     # Параллельная загрузка файлов (максимум 5 одновременно)
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_UPLOADS)
-    
+
     async def upload_with_semaphore(file: UploadFile):
         async with semaphore:
             return await upload_single_file(file)
-    
+
     tasks = [upload_with_semaphore(file) for file in files]
     uploaded = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     # Фильтруем успешные загрузки
     success_files = [f for f in uploaded if isinstance(f, dict)]
-    
+
     return {"files": success_files, "count": len(success_files), "total": len(files)}
 
 @app.get("/api/files")
 async def list_files(path: str = "/", user: str = Depends(get_current_user)):
-    # Исправление: проверяем parent для файлов и папок
+    """Получить список файлов и папок для текущего пользователя"""
+    # Фильтруем файлы ТОЛЬКО текущего пользователя
     files = [f for f in db.data["files"].values() 
-             if (f.get("parent") == path or f.get("path") == path) and f["user_id"] == user]
-    folders = [f for f in db.data["folders"].values() 
-               if f.get("parent") == path and f["user_id"] == user]
+             if f.get("user_id") == user and f.get("parent") == path]
     
-    # Исправляем файлы у которых нет parent но есть path
-    for file in files:
-        if "parent" not in file:
-            file["parent"] = file.get("path", "/")
-    db.save()
+    folders = [f for f in db.data["folders"].values() 
+               if f.get("user_id") == user and f.get("parent") == path]
+    
+    # Логирование для отладки
+    print(f"📁 User '{user}' requesting path '{path}'")
+    print(f"   Found {len(files)} files, {len(folders)} folders")
+    print(f"   Total files in DB: {len(db.data['files'])}")
+    
+    # Покажем какие пользователи есть в файлах
+    user_files = {}
+    for f in db.data["files"].values():
+        uid = f.get("user_id", "unknown")
+        user_files[uid] = user_files.get(uid, 0) + 1
+    
+    print(f"   Files by user: {user_files}")
     
     return {"files": files, "folders": folders}
 
