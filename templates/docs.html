@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Документация - Nimbus File</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        :root { 
+            --bg: #0f0f0f; 
+            --card: rgba(30, 30, 30, 0.95); 
+            --text: #e2e8f0; 
+            --border: #4a5568; 
+            --primary: #63b3ed; 
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --hover: #4299e1;
+            --cell-bg: rgba(255,255,255,0.05);
+            --code-bg: #2d3748;
+            --success: #48bb78;
+        }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh; 
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.7;
+        }
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+            z-index: -1;
+        }
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+        .floating-cell {
+            position: absolute;
+            background: var(--cell-bg);
+            border: 1px solid var(--border);
+            animation: float 6s ease-in-out infinite;
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+        }
+        .floating-cell:nth-child(1) { width: 60px; height: 60px; top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-cell:nth-child(2) { width: 40px; height: 40px; top: 20%; right: 15%; animation-delay: 1s; }
+        .floating-cell:nth-child(3) { width: 80px; height: 80px; bottom: 15%; left: 20%; animation-delay: 2s; }
+        .floating-cell:nth-child(4) { width: 50px; height: 50px; bottom: 25%; right: 25%; animation-delay: 3s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        .nav { 
+            background: var(--card); 
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border); 
+            position: sticky; 
+            top: 0; 
+            z-index: 100; 
+        }
+        .nav-content { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 1rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+        }
+        .logo { 
+            font-size: 1.4rem; 
+            font-weight: bold; 
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        .logo:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+        .logo svg {
+            width: 28px;
+            height: 28px;
+        }
+        .container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+        }
+        .docs-content {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            animation: cardAppear 0.5s ease-out;
+        }
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            opacity: 0.7;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        h2 {
+            font-size: 1.8rem;
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        h2 svg {
+            width: 28px;
+            height: 28px;
+        }
+        h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--primary);
+        }
+        p {
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .feature-card {
+            background: rgba(102, 126, 234, 0.08);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        }
+        .feature-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        .feature-card svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+        }
+        .feature-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0;
+        }
+        code {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        .env-example {
+            background: rgba(72, 187, 120, 0.1);
+            border: 1px solid var(--success);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+        .env-example code {
+            color: var(--success);
+        }
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+        }
+        .back-btn:hover {
+            background: var(--card);
+            transform: translateX(-4px);
+        }
+        .back-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .toc {
+            background: rgba(102, 126, 234, 0.08);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+        .toc h4 {
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 0.4rem;
+        }
+        .toc a {
+            color: var(--text);
+            opacity: 0.8;
+            transition: all 0.2s;
+            display: block;
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+        }
+        .toc a:hover {
+            background: rgba(102, 126, 234, 0.15);
+            opacity: 1;
+            text-decoration: none;
+        }
+        .api-method {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .api-method.post {
+            background: rgba(72, 187, 120, 0.2);
+            color: var(--success);
+        }
+        .api-method.get {
+            background: rgba(66, 153, 225, 0.2);
+            color: #4299e1;
+        }
+        .api-method.delete {
+            background: rgba(245, 101, 101, 0.2);
+            color: #f56565;
+        }
+        .api-method.put {
+            background: rgba(237, 137, 54, 0.2);
+            color: #ed8936;
+        }
+        .endpoint {
+            font-family: 'Courier New', monospace;
+            background: var(--code-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            .docs-content {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            pre {
+                padding: 1rem;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="floating-cell"></div>
+    <div class="floating-cell"></div>
+    <div class="floating-cell"></div>
+    <div class="floating-cell"></div>
+
+    <nav class="nav">
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                </svg>
+                Nimbus File
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="docs-content">
+            <button class="back-btn" onclick="window.location.href='/'">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                Назад
+            </button>
+
+            <h1>☁️ Nimbus File</h1>
+            <p class="subtitle">Безлимитное облачное хранилище на базе Telegram</p>
+
+            <div class="toc">
+                <h4>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    Содержание
+                </h4>
+                <ul>
+                    <li><a href="#features">✨ Возможности</a></li>
+                    <li><a href="#quickstart">🚀 Быстрый старт</a></li>
+                    <li><a href="#deploy">📦 Деплой на Render</a></li>
+                    <li><a href="#api">📚 API Документация</a></li>
+                    <li><a href="#examples">🔧 Примеры использования</a></li>
+                    <li><a href="#config">⚙️ Конфигурация</a></li>
+                </ul>
+            </div>
+
+            <h2 id="features">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                Возможности
+            </h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        Безлимитное хранилище
+                    </h4>
+                    <p>Используй Telegram как бесплатный бэкенд без ограничений по размеру</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Балансировка нагрузки
+                    </h4>
+                    <p>Автоматическое распределение между ботами и каналами</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Шифрование AES-256
+                    </h4>
+                    <p>Все файлы шифруются перед отправкой в Telegram</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        Темная тема
+                    </h4>
+                    <p>Автоматически сохраняется в cookie</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                        Адаптивный дизайн
+                    </h4>
+                    <p>Работает на ПК, планшетах и телефонах</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                        API ключи
+                    </h4>
+                    <p>Для интеграции с другими сервисами</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Шеринг файлов
+                    </h4>
+                    <p>Делись файлами по публичной ссылке</p>
+                </div>
+                <div class="feature-card">
+                    <h4>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        Папки
+                    </h4>
+                    <p>Организуй файлы как хочешь</p>
+                </div>
+            </div>
+
+            <h2 id="quickstart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Быстрый старт
+            </h2>
+
+            <h3>1. Установка</h3>
+            <pre><code>git clone https://github.com/hakeroneh1/nimbus-file.git
+cd nimbus-file
+pip install -r requirements.txt</code></pre>
+
+            <h3>2. Создаем ботов в Telegram</h3>
+            <ul>
+                <li>Напиши <code>@BotFather</code> в Telegram</li>
+                <li>Создай нужное количество ботов командой <code>/newbot</code></li>
+                <li>Сохрани токены вида <code>123456:ABCdef...</code></li>
+            </ul>
+
+            <h3>3. Создаем каналы</h3>
+            <ul>
+                <li>Создай приватные каналы в Telegram</li>
+                <li>Добавь ботов как администраторов</li>
+                <li>Получи ID каналов через <code>@getidsbot</code> (формат <code>-1001234567890</code>)</li>
+            </ul>
+
+            <h3>4. Настройка .env</h3>
+            <div class="env-example">
+                <pre><code>ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+ENCRYPTION_KEY=your-secret-key-change-in-production
+
+BOT_TOKEN_1=123456:ABCdef...
+BOT_TOKEN_2=123456:ABCdef...
+
+CHANNEL_ID_1=-1001234567890
+CHANNEL_ID_2=-1001234567891
+
+PORT=8000</code></pre>
+            </div>
+
+            <h3>5. Запуск</h3>
+            <pre><code>python main.py</code></pre>
+            <p>Открой браузер: <code>http://localhost:8000</code><br>Войди с логином/паролем из .env</p>
+
+            <h2 id="deploy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                    <line x1="12" y1="22.08" x2="12" y2="12"/>
+                </svg>
+                Деплой на Render
+            </h2>
+
+            <ol>
+                <li>
+                    <strong>Создай аккаунт на render.com</strong>
+                    <p>Зайди на render.com и зарегистрируйся через GitHub</p>
+                </li>
+                <li>
+                    <strong>Подготовь репозиторий</strong>
+                    <pre><code>git init
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/hakeroneh1/nimbus-file.git
+git push -u origin main</code></pre>
+                </li>
+                <li>
+                    <strong>Создай Web Service на Render</strong>
+                    <ul>
+                        <li>Нажми "New +" → "Web Service"</li>
+                        <li>Подключи свой GitHub репозиторий</li>
+                        <li>Настрой: Name, Environment: Python 3, Build Command: <code>pip install -r requirements.txt</code>, Start Command: <code>python main.py</code></li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Добавь переменные окружения</strong>
+                    <p>В разделе Environment Variables добавь все переменные из .env</p>
+                </li>
+                <li>
+                    <strong>Подключи базу данных (обязательно для Render)</strong>
+                    <ul>
+                        <li>Зайди на neon.tech и создай бесплатный PostgreSQL</li>
+                        <li>Получи строку подключения</li>
+                        <li>Добавь в переменные окружения: <code>DATABASE_URL=postgresql://...</code></li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h2 id="api">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                API Документация
+            </h2>
+            <p>После запуска доступна по адресу <code>/api/docs</code></p>
+
+            <h3>Аутентификация</h3>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/login</code>
+                <span>— вход в систему</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/logout</code>
+                <span>— выход</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method get">GET</span>
+                <code>/api/me</code>
+                <span>— информация о текущем пользователе</span>
+            </div>
+
+            <h3>Управление файлами</h3>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/upload</code>
+                <span>— загрузить файл</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method get">GET</span>
+                <code>/api/files?path=/</code>
+                <span>— список файлов и папок</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method get">GET</span>
+                <code>/api/file/{id}</code>
+                <span>— информация о файле</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method get">GET</span>
+                <code>/api/file/{id}/download</code>
+                <span>— скачать файл</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method delete">DELETE</span>
+                <code>/api/file/{id}</code>
+                <span>— удалить файл</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method put">PUT</span>
+                <code>/api/file/{id}</code>
+                <span>— переименовать файл</span>
+            </div>
+
+            <h3>Папки</h3>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/folder</code>
+                <span>— создать папку</span>
+            </div>
+
+            <h3>Шеринг</h3>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/share/{file_id}</code>
+                <span>— создать ссылку</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method get">GET</span>
+                <code>/api/share/{share_id}</code>
+                <span>— скачать по ссылке</span>
+            </div>
+
+            <h3>API ключи</h3>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/key/create</code>
+                <span>— создать API ключ</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method delete">DELETE</span>
+                <code>/api/key/{key}</code>
+                <span>— удалить API ключ</span>
+            </div>
+            <div class="endpoint">
+                <span class="api-method post">POST</span>
+                <code>/api/key/upload</code>
+                <span>— загрузить файл по API ключу</span>
+            </div>
+
+            <h2 id="examples">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Примеры использования
+            </h2>
+
+            <h3>Python</h3>
+            <pre><code>import requests
+
+API_URL = "http://localhost:8000"
+API_KEY = "ваш_api_ключ"
+
+# Загрузка файла
+files = {"file": open("video.mp4", "rb")}
+data = {"api_key": API_KEY, "path": "/"}
+response = requests.post(f"{API_URL}/api/key/upload", files=files, data=data)
+print(response.json())
+
+# Скачивание файла
+file_id = response.json()["id"]
+response = requests.get(f"{API_URL}/api/file/{file_id}/download")
+with open("downloaded.mp4", "wb") as f:
+    f.write(response.content)
+
+# Создание папки
+response = requests.post(
+    f"{API_URL}/api/folder",
+    data={"name": "Мои видео", "path": "/"}
+)
+
+# Создание ссылки
+response = requests.post(f"{API_URL}/api/share/{file_id}")
+share_url = response.json()["url"]
+print(f"Ссылка: {API_URL}{share_url}")</code></pre>
+
+            <h3>JavaScript</h3>
+            <pre><code>const API_URL = "http://localhost:8000";
+const API_KEY = "ваш_api_ключ";
+
+const formData = new FormData();
+formData.append("file", fileInput.files[0]);
+formData.append("api_key", API_KEY);
+formData.append("path", "/");
+
+fetch(`${API_URL}/api/key/upload`, {
+    method: "POST",
+    body: formData
+}).then(res => res.json()).then(data => console.log(data));
+
+// Скачать файл
+window.open(`${API_URL}/api/file/${fileId}/download`);
+
+// Создать папку
+fetch(`${API_URL}/api/folder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ name: "Новая папка", path: "/" })
+});</code></pre>
+
+            <h3>cURL</h3>
+            <pre><code># Загрузка файла
+curl -X POST http://localhost:8000/api/key/upload \
+  -F "file=@video.mp4" \
+  -F "api_key=ваш_api_ключ" \
+  -F "path=/"
+
+# Скачивание файла
+curl -OJ http://localhost:8000/api/file/FILE_ID/download
+
+# Создание папки
+curl -X POST http://localhost:8000/api/folder \
+  -d "name=Моя папка" \
+  -d "path=/"</code></pre>
+
+            <h2 id="config">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                Конфигурация
+            </h2>
+
+            <h3>Переменные окружения</h3>
+            <ul>
+                <li><code>ADMIN_USERNAME</code> — логин для входа</li>
+                <li><code>ADMIN_PASSWORD</code> — пароль для входа</li>
+                <li><code>ENCRYPTION_KEY</code> — ключ шифрования (сохраните!)</li>
+                <li><code>BOT_TOKEN_*</code> — токены Telegram ботов</li>
+                <li><code>CHANNEL_ID_*</code> — ID Telegram каналов</li>
+                <li><code>DATABASE_URL</code> — PostgreSQL connection string</li>
+                <li><code>PORT</code> — порт сервера (по умолчанию 8000)</li>
+            </ul>
+
+            <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); opacity: 0.7;">
+                <p>Nimbus File — Твои файлы. Твои правила. Без лимитов. ☁️</p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                    <a href="https://github.com/hakeroneh1/nimbus-file" target="_blank">GitHub</a> • 
+                    MIT License
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
