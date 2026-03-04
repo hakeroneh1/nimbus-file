@@ -13,11 +13,25 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import uvicorn
 from telegram import Bot
-import asyncpg
-import redis.asyncio as redis
 from dotenv import load_dotenv
 import jwt
 from passlib.context import CryptContext
+
+# Пытаемся импортировать asyncpg и redis, но делаем их опциональными
+try:
+    import asyncpg
+    HAS_ASYNCPG = True
+except ImportError:
+    HAS_ASYNCPG = False
+    asyncpg = None
+
+try:
+    import redis.asyncio as redis
+    HAS_REDIS = True
+except ImportError:
+    HAS_REDIS = False
+    redis = None
+
 from cryptography.fernet import Fernet
 import base64
 
@@ -67,26 +81,36 @@ USERS = load_users_from_env()
 class Database:
     def __init__(self):
         self.db_path = Path("data.json")
-        self.data = {"users": {}, "files": {}, "folders": {}, "chunks": {}, "api_keys": {}}
+        self.data = {"users": {}, "files": {}, "folders": {}, "chunks": {}, "api_keys": {}, "shares": {}}
         self.load()
-    
+        self.pg = None
+        self.redis = None
+
     def load(self):
         if self.db_path.exists():
-            with open(self.db_path) as f:
+            with open(self.db_path, encoding='utf-8') as f:
                 self.data.update(json.load(f))
-    
+
     def save(self):
         self.db_path.parent.mkdir(exist_ok=True)
-        with open(self.db_path, "w") as f:
-            json.dump(self.data, f, indent=2)
-    
+        with open(self.db_path, "w", encoding='utf-8') as f:
+            json.dump(self.data, f, indent=2, ensure_ascii=False)
+
     async def init_postgres(self):
-        if os.getenv("DATABASE_URL"):
-            self.pg = await asyncpg.create_pool(os.getenv("DATABASE_URL"))
-    
+        if HAS_ASYNCPG and os.getenv("DATABASE_URL"):
+            try:
+                self.pg = await asyncpg.create_pool(os.getenv("DATABASE_URL"))
+            except Exception as e:
+                print(f"⚠ PostgreSQL error: {e}")
+                self.pg = None
+
     async def init_redis(self):
-        if os.getenv("REDIS_URL"):
-            self.redis = await redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+        if HAS_REDIS and os.getenv("REDIS_URL"):
+            try:
+                self.redis = await redis.from_url(os.getenv("REDIS_URL"), decode_responses=True)
+            except Exception as e:
+                print(f"⚠ Redis error: {e}")
+                self.redis = None
 
 db = Database()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -128,25 +152,24 @@ bot_manager = BotManager()
 # FastAPI приложение
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Опциональное подключение к БД
     database_url = os.getenv("DATABASE_URL")
     redis_url = os.getenv("REDIS_URL")
     
-    if database_url:
+    if database_url and HAS_ASYNCPG:
         try:
             await db.init_postgres()
             print("✓ PostgreSQL подключен")
         except Exception as e:
             print(f"⚠ PostgreSQL не подключен: {e}")
     
-    if redis_url:
+    if redis_url and HAS_REDIS:
         try:
             await db.init_redis()
             print("✓ Redis подключен")
         except Exception as e:
             print(f"⚠ Redis не подключен: {e}")
     
-    if not database_url and not redis_url:
+    if not database_url or (not HAS_ASYNCPG and not HAS_REDIS):
         print("ℹ Работа с локальным хранилищем (data.json)")
     
     yield
